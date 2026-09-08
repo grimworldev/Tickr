@@ -70,9 +70,22 @@ class ParkingLogController extends Controller
 
     public function update(Request $request, ParkingLog $parkingLog): RedirectResponse
     {
+
+    }
+
+    public function destroy(ParkingLog $parkingLog): RedirectResponse
+    {
+        dd($parkingLog);
+        $parkingLog->delete();
+
+        return redirect()->route('parking-logs.index')->with('toast', ['type' => 'success', 'message' => 'Parking log deleted.']);
+    }
+
+    public function checkout(Request $request, ParkingLog $parkingLog): RedirectResponse
+    {
         $validated = $request->validate([
             'amount_paid' => ['required', 'numeric', 'min:0'],
-            'payment_method' => ['required', 'in:cash,gcash,maya,card'],
+            'payment_method' => ['required'],
         ]);
 
         if ($validated['amount_paid'] < $parkingLog->rate) {
@@ -94,12 +107,5 @@ class ParkingLogController extends Controller
         ]);
 
         return redirect()->route('parking-logs.index')->with('toast', ['type' => 'success', 'message' => 'Vehicle checked out successfully.']);
-    }
-
-    public function destroy(ParkingLog $parkingLog): RedirectResponse
-    {
-        $parkingLog->delete();
-
-        return redirect()->route('parking-logs.index')->with('toast', ['type' => 'success', 'message' => 'Parking log deleted.']);
     }
 }

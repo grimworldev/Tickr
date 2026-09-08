@@ -1,7 +1,7 @@
 import { Form } from '@inertiajs/react';
 import { LogOutIcon } from 'lucide-react';
 import { useState } from 'react';
-import { update } from '@/routes/parking-logs';
+import { checkout } from '@/routes/parking-logs';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -25,22 +25,38 @@ import {
 } from '@/components/ui/select';
 import type { ParkingLog } from '@/types/models';
 
-type Props = {
-    parkingLog: ParkingLog;
+type Billing = {
+    rateType: string;
+    unitPrice: number;
+    units: number;
+    total: number;
 };
 
-export function ParkingLogCheckoutDialog({ parkingLog }: Props) {
+type Props = {
+    parkingLog: ParkingLog;
+    billing: Billing;
+};
+
+function SummaryRow({ label, value }: { label: string; value: React.ReactNode }) {
+    return (
+        <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">{label}</span>
+            <span className="font-medium">{value}</span>
+        </div>
+    );
+}
+
+export function ParkingLogCheckoutDialog({ parkingLog, billing }: Props) {
     const [open, setOpen] = useState(false);
     const [amountPaid, setAmountPaid] = useState('');
-    const [paymentMethod, setPaymentMethod] = useState('cash');
+    const [paymentMethod, setPaymentMethod] = useState('Cash');
 
-    const rateOwed = Number(parkingLog.rate);
     const paid = Number(amountPaid) || 0;
-    const change = paid > rateOwed ? paid - rateOwed : 0;
+    const change = paid > billing.total ? paid - billing.total : 0;
 
     const resetFields = () => {
         setAmountPaid('');
-        setPaymentMethod('cash');
+        setPaymentMethod('Cash');
     };
 
     return (
@@ -58,7 +74,7 @@ export function ParkingLogCheckoutDialog({ parkingLog }: Props) {
             </DialogTrigger>
             <DialogContent>
                 <Form
-                    {...update.form(parkingLog.id)}
+                    {...checkout.form(parkingLog.uid)}
                     disableWhileProcessing
                     onSuccess={() => {
                         setOpen(false);
@@ -72,10 +88,28 @@ export function ParkingLogCheckoutDialog({ parkingLog }: Props) {
                                 <DialogTitle>Checkout Vehicle</DialogTitle>
                                 <DialogDescription>
                                     Confirm checkout and payment for{' '}
-                                    <strong>{parkingLog.plate_number}</strong>. Amount owed:{' '}
-                                    <strong>₱{rateOwed.toFixed(2)}</strong>.
+                                    <strong>{parkingLog.plate_number}</strong>.
                                 </DialogDescription>
                             </DialogHeader>
+
+                            <div className="rounded-lg border bg-muted/40 p-3 grid gap-1.5">
+                                <SummaryRow label="Rate Type" value={billing.rateType} />
+                                <SummaryRow
+                                    label="Rate"
+                                    value={`₱${billing.unitPrice.toFixed(2)} / ${billing.rateType}`}
+                                />
+                                <SummaryRow label="Units Charged" value={billing.units} />
+                                <SummaryRow
+                                    label="Formula"
+                                    value={`${billing.units} × ₱${billing.unitPrice.toFixed(2)}`}
+                                />
+                                <div className="flex items-center justify-between border-t pt-1.5 mt-1">
+                                    <span className="text-sm font-semibold">Total Due</span>
+                                    <span className="text-sm font-semibold">
+                                        ₱{billing.total.toFixed(2)}
+                                    </span>
+                                </div>
+                            </div>
 
                             <div className="grid gap-2">
                                 <Label htmlFor="amount_paid">Amount Paid</Label>
@@ -101,17 +135,13 @@ export function ParkingLogCheckoutDialog({ parkingLog }: Props) {
                                         <SelectValue placeholder="Select payment method" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="cash">Cash</SelectItem>
-                                        <SelectItem value="gcash">GCash</SelectItem>
-                                        <SelectItem value="maya">Maya</SelectItem>
-                                        <SelectItem value="card">Card</SelectItem>
+                                        <SelectItem value="Cash">Cash</SelectItem>
+                                        <SelectItem value="GCash">GCash</SelectItem>
+                                        <SelectItem value="Maya">Maya</SelectItem>
+                                        <SelectItem value="Card">Card</SelectItem>
                                     </SelectContent>
                                 </Select>
-                                <input
-                                    type="hidden"
-                                    name="payment_method"
-                                    value={paymentMethod}
-                                />
+                                <input type="hidden" name="payment_method" value={paymentMethod} />
                                 <InputError message={errors.payment_method} />
                             </div>
 

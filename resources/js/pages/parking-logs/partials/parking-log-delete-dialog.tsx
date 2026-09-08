@@ -36,7 +36,7 @@ export function ParkingLogDeleteDialog({ parkingLog }: Props) {
             </DialogTrigger>
             <DialogContent>
                 <Form
-                    {...destroy.form(parkingLog.id)}
+                    {...destroy.form(parkingLog.uid)}
                     disableWhileProcessing
                     onSuccess={() => setOpen(false)}
                     className="grid gap-6"

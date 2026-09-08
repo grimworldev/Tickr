@@ -147,7 +147,7 @@ export default function Show({ parkingLog }: Props) {
                     <div className="flex justify-end">
                         <ParkingLogCheckoutDialog
                             parkingLog={parkingLog}
-                            amountDue={billing.total}
+                            billing={billing}
                         />
                     </div>
                 )}

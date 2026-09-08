@@ -65,9 +65,6 @@ export default function Index({ parkingLogs, categories, rates }: Props) {
                             <EyeIcon className="size-4" />
                         </Link>
                     </Button>
-                    {row.status === 'Active' && (
-                        <ParkingLogCheckoutDialog parkingLog={row} />
-                    )}
                     <ParkingLogDeleteDialog parkingLog={row} />
                 </div>
             ),

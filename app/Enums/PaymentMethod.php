@@ -4,10 +4,10 @@ namespace App\Enums;
 
 enum PaymentMethod: string
 {
-    case Cash = 'cash';
-    case GCash = 'gcash';
-    case Maya = 'maya';
-    case Card = 'card';
+    case Cash = 'Cash';
+    case GCash = 'GCash';
+    case Maya = 'Maya';
+    case Card = 'Card';
 
     public function label(): string
     {
