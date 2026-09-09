@@ -45,7 +45,6 @@ export default function Register({ passwordRules }: Props) {
                                         required
                                         autoFocus
                                         tabIndex={1}
-                                        autoComplete="given-name"
                                         name="first_name"
                                         placeholder="First name"
                                     />
@@ -59,7 +58,6 @@ export default function Register({ passwordRules }: Props) {
                                         type="text"
                                         required
                                         tabIndex={2}
-                                        autoComplete="family-name"
                                         name="last_name"
                                         placeholder="Last name"
                                     />
@@ -93,7 +91,6 @@ export default function Register({ passwordRules }: Props) {
                                     type="text"
                                     required
                                     tabIndex={4}
-                                    autoComplete="username"
                                     name="username"
                                     placeholder="Username"
                                 />
@@ -107,7 +104,6 @@ export default function Register({ passwordRules }: Props) {
                                     type="email"
                                     required
                                     tabIndex={5}
-                                    autoComplete="email"
                                     name="email"
                                     placeholder="email@example.com"
                                 />
@@ -120,7 +116,6 @@ export default function Register({ passwordRules }: Props) {
                                     id="password"
                                     required
                                     tabIndex={6}
-                                    autoComplete="new-password"
                                     name="password"
                                     placeholder="Password"
                                     passwordrules={passwordRules}
@@ -136,7 +131,6 @@ export default function Register({ passwordRules }: Props) {
                                     id="password_confirmation"
                                     required
                                     tabIndex={7}
-                                    autoComplete="new-password"
                                     name="password_confirmation"
                                     placeholder="Confirm password"
                                     passwordrules={passwordRules}

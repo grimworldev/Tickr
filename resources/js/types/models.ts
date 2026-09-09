@@ -41,7 +41,10 @@ export interface ParkingLog {
     time_in: string;
     time_out: string | null;
     status: ParkingStatus;
-    logged_by: number | null;
+    logged_by:{
+        id: number;
+        name:string;
+    }
     created_at: string | null;
     updated_at: string | null;
     category?: Category;

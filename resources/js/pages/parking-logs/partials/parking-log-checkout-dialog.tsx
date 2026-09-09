@@ -23,14 +23,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import type { ParkingLog } from '@/types/models';
-
-type Billing = {
-    rateType: string;
-    unitPrice: number;
-    units: number;
-    total: number;
-};
+import type { Billing } from '@/lib/parking-billing';
+import type { ParkingLog } from '@/types';
 
 type Props = {
     parkingLog: ParkingLog;
@@ -47,16 +41,17 @@ function SummaryRow({ label, value }: { label: string; value: React.ReactNode })
 }
 
 export function ParkingLogCheckoutDialog({ parkingLog, billing }: Props) {
+    console.log(parkingLog);
     const [open, setOpen] = useState(false);
     const [amountPaid, setAmountPaid] = useState('');
-    const [paymentMethod, setPaymentMethod] = useState('Cash');
+    const [paymentMethod, setPaymentMethod] = useState('cash');
 
     const paid = Number(amountPaid) || 0;
     const change = paid > billing.total ? paid - billing.total : 0;
 
     const resetFields = () => {
         setAmountPaid('');
-        setPaymentMethod('Cash');
+        setPaymentMethod('cash');
     };
 
     return (
@@ -68,7 +63,8 @@ export function ParkingLogCheckoutDialog({ parkingLog, billing }: Props) {
             }}
         >
             <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Checkout vehicle">
+                <Button variant="ghost" size="sm">
+                    Checkout
                     <LogOutIcon className="size-4" />
                 </Button>
             </DialogTrigger>
@@ -92,18 +88,18 @@ export function ParkingLogCheckoutDialog({ parkingLog, billing }: Props) {
                                 </DialogDescription>
                             </DialogHeader>
 
-                            <div className="rounded-lg border bg-muted/40 p-3 grid gap-1.5">
+                            <div className="grid gap-1.5 rounded-lg border bg-muted/40 p-3">
                                 <SummaryRow label="Rate Type" value={billing.rateType} />
                                 <SummaryRow
                                     label="Rate"
                                     value={`₱${billing.unitPrice.toFixed(2)} / ${billing.rateType}`}
                                 />
-                                <SummaryRow label="Units Charged" value={billing.units} />
+                                <SummaryRow label="Duration" value={billing.units} />
                                 <SummaryRow
                                     label="Formula"
                                     value={`${billing.units} × ₱${billing.unitPrice.toFixed(2)}`}
                                 />
-                                <div className="flex items-center justify-between border-t pt-1.5 mt-1">
+                                <div className="mt-1 flex items-center justify-between border-t pt-1.5">
                                     <span className="text-sm font-semibold">Total Due</span>
                                     <span className="text-sm font-semibold">
                                         ₱{billing.total.toFixed(2)}
@@ -111,7 +107,8 @@ export function ParkingLogCheckoutDialog({ parkingLog, billing }: Props) {
                                 </div>
                             </div>
 
-                            <div className="grid gap-2">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
                                 <Label htmlFor="amount_paid">Amount Paid</Label>
                                 <Input
                                     id="amount_paid"
@@ -131,18 +128,19 @@ export function ParkingLogCheckoutDialog({ parkingLog, billing }: Props) {
                             <div className="grid gap-2">
                                 <Label htmlFor="payment_method">Payment Method</Label>
                                 <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                                    <SelectTrigger id="payment_method">
+                                    <SelectTrigger id="payment_method" className='w-full'>
                                         <SelectValue placeholder="Select payment method" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="Cash">Cash</SelectItem>
-                                        <SelectItem value="GCash">GCash</SelectItem>
-                                        <SelectItem value="Maya">Maya</SelectItem>
-                                        <SelectItem value="Card">Card</SelectItem>
+                                        <SelectItem value="cash">Cash</SelectItem>
+                                        <SelectItem value="gcash">GCash</SelectItem>
+                                        <SelectItem value="maya">Maya</SelectItem>
+                                        <SelectItem value="card">Card</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <input type="hidden" name="payment_method" value={paymentMethod} />
                                 <InputError message={errors.payment_method} />
+                            </div>
                             </div>
 
                             {paid > 0 && (

@@ -13,15 +13,38 @@ use Inertia\Response;
 
 class ParkingLogController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $parkingLogs = ParkingLog::query()
+            ->with(['category:id,name', 'rateDetail:id,name', 'loggedBy:id,first_name,last_name', 'transaction'])
+            ->when(
+                $request->filled('category_id'),
+                fn($query) =>
+                $query->where('category_id', $request->input('category_id'))
+            )
+            ->when(
+                $request->filled('rate_id'),
+                fn($query) =>
+                $query->where('rate_id', $request->input('rate_id'))
+            )
+            ->when(
+                $request->filled('status'),
+                fn($query) =>
+                $query->where('status', $request->input('status'))
+            )
+            ->when(
+                $request->filled('date'),
+                fn($query) =>
+                $query->whereDate('time_in', $request->input('date'))
+            )
+            ->latest('time_in')
+            ->get();
+
         return Inertia::render('parking-logs/index', [
-            'parkingLogs' => ParkingLog::query()
-                ->with(['category', 'rateDetail', 'loggedBy'])
-                ->latest('time_in')
-                ->paginate(10),
+            'parkingLogs' => ['data' => $parkingLogs],
             'categories' => Category::all(),
             'rates' => Rate::all(),
+            'filters' => $request->only(['category_id', 'rate_id', 'status', 'date']),
         ]);
     }
 
@@ -54,12 +77,22 @@ class ParkingLogController extends Controller
         return redirect()->route('parking-logs.index')->with('toast', ['type' => 'success', 'message' => 'Vehicle logged in successfully.']);
     }
 
-    public function show(ParkingLog $parkingLog): Response
+    public function show($uid)
     {
+        $parkingLog = ParkingLog::where('uid', $uid)->firstOrFail();
+
+        $parkingLog->load([
+            'category',
+            'rateDetail',
+            'loggedBy',
+            'transaction',
+        ]);
+
         return Inertia::render('parking-logs/show', [
-            'parkingLog' => $parkingLog->load(['category', 'rateDetail', 'loggedBy', 'transaction']),
+            'parkingLog' => $parkingLog,
         ]);
     }
+
 
     public function edit(ParkingLog $parkingLog): Response
     {
@@ -68,7 +101,7 @@ class ParkingLogController extends Controller
         ]);
     }
 
-    public function update(Request $request, ParkingLog $parkingLog): RedirectResponse
+    public function update(Request $request, ParkingLog $parkingLog)
     {
 
     }

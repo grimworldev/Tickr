@@ -1,4 +1,13 @@
-export type UserRole = 'System Administrator' | 'User';
+export const UserRole = {
+    Administrator: 0,
+    User: 1,
+} as const;
+
+export type UserRoleValue = (typeof UserRole)[keyof typeof UserRole];
+
+export function userRoleLabel(role: UserRoleValue): string {
+    return role === UserRole.Administrator ? 'System Administrator' : 'User';
+}
 
 export type User = {
     id: number;
@@ -11,7 +20,7 @@ export type User = {
     email: string;
     avatar?: string;
     email_verified_at: string | null;
-    role: 0 | 1;
+    role: UserRoleValue;
     two_factor_enabled?: boolean;
     created_at: string;
     updated_at: string;
