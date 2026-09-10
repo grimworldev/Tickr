@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ParkingStatus;
+use App\Enums\PaymentMethod;
 use App\Models\Category;
 use App\Models\ParkingLog;
 use App\Models\Rate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -15,45 +18,43 @@ class ParkingLogController extends Controller
 {
     public function index(Request $request): Response
     {
+        $allowedPerPage = [25, 50, 75, 100];
+        $perPage = (int) $request->input('per_page', 25);
+
+        if (!in_array($perPage, $allowedPerPage, true)) {
+            $perPage = 25;
+        }
+
         $parkingLogs = ParkingLog::query()
-            ->with(['category:id,name', 'rateDetail:id,name', 'loggedBy:id,first_name,last_name', 'transaction'])
-            ->when(
-                $request->filled('category_id'),
-                fn($query) =>
-                $query->where('category_id', $request->input('category_id'))
-            )
-            ->when(
-                $request->filled('rate_id'),
-                fn($query) =>
-                $query->where('rate_id', $request->input('rate_id'))
-            )
+            ->select(['id', 'uid', 'plate_number', 'category_id', 'rate_id', 'rate', 'time_in', 'time_out', 'status', 'logged_by'])
+            ->with([
+                'category:id,name',
+                'rateDetail:id,name',
+                'loggedBy:id,first_name,last_name',
+                'transaction:id,log_id,amount_paid,change_due,payment_method,created_at',
+            ])
+            ->when($request->filled('category_id'), fn($q) => $q->where('category_id', $request->input('category_id')))
+            ->when($request->filled('rate_id'), fn($q) => $q->where('rate_id', $request->input('rate_id')))
             ->when(
                 $request->filled('status'),
-                fn($query) =>
-                $query->where('status', $request->input('status'))
+                fn($q) => $q->where('status', $request->input('status')),
+                fn($q) => $q->where('status', '!=', 'Completed'),
             )
-            ->when(
-                $request->filled('date'),
-                fn($query) =>
-                $query->whereDate('time_in', $request->input('date'))
-            )
+            ->when($request->filled('date'), fn($q) => $q->whereDate('time_in', $request->input('date')))
             ->latest('time_in')
-            ->get();
+            ->paginate($perPage)
+            ->withQueryString();
 
         return Inertia::render('parking-logs/index', [
-            'parkingLogs' => ['data' => $parkingLogs],
-            'categories' => Category::all(),
-            'rates' => Rate::all(),
-            'filters' => $request->only(['category_id', 'rate_id', 'status', 'date']),
+            'parkingLogs' => $parkingLogs,
+            'categories' => Cache::remember('categories.all', now()->addHour(), fn() => Category::all()->values()->toArray()),
+            'rates' => Cache::remember('rates.all', now()->addHour(), fn() => Rate::all()->values()->toArray()),
+            'filters' => $request->only(['category_id', 'rate_id', 'status', 'date', 'per_page']),
         ]);
     }
 
-    public function create(): Response
+    public function create()
     {
-        return Inertia::render('parking-logs/create', [
-            'categories' => Category::all(),
-            'rates' => Rate::all(),
-        ]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -77,38 +78,20 @@ class ParkingLogController extends Controller
         return redirect()->route('parking-logs.index')->with('toast', ['type' => 'success', 'message' => 'Vehicle logged in successfully.']);
     }
 
-    public function show($uid)
+    public function show($uid): Response
     {
         $parkingLog = ParkingLog::where('uid', $uid)->firstOrFail();
 
-        $parkingLog->load([
-            'category',
-            'rateDetail',
-            'loggedBy',
-            'transaction',
-        ]);
+        $parkingLog->load(['category', 'rateDetail', 'loggedBy', 'transaction']);
 
         return Inertia::render('parking-logs/show', [
             'parkingLog' => $parkingLog,
         ]);
     }
 
-
-    public function edit(ParkingLog $parkingLog): Response
+    public function destroy($uid): RedirectResponse
     {
-        return Inertia::render('parking-logs/edit', [
-            'parkingLog' => $parkingLog,
-        ]);
-    }
-
-    public function update(Request $request, ParkingLog $parkingLog)
-    {
-
-    }
-
-    public function destroy(ParkingLog $parkingLog): RedirectResponse
-    {
-        dd($parkingLog);
+        $parkingLog = ParkingLog::where('uid', $uid)->firstOrFail();
         $parkingLog->delete();
 
         return redirect()->route('parking-logs.index')->with('toast', ['type' => 'success', 'message' => 'Parking log deleted.']);
@@ -120,7 +103,7 @@ class ParkingLogController extends Controller
 
         $validated = $request->validate([
             'amount_paid' => ['required', 'numeric', 'min:0'],
-            'payment_method' => ['required'],
+            'payment_method' => ['required', Rule::enum(PaymentMethod::class)],
         ]);
 
         if ($validated['amount_paid'] < $parkingLog->rate) {

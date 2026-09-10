@@ -7,6 +7,7 @@ use App\Enums\UserRole;
 use App\Models\ParkingLog;
 use App\Models\ParkingTransaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -29,49 +30,43 @@ class DashboardController extends Controller
      */
     protected function adminDashboard(): Response
     {
-        $today = now();
+        $data = Cache::remember('dashboard.admin.summary', now()->addMinutes(5), function () {
+            $today = now();
 
-        $summary = [
-            'today' => (float) ParkingTransaction::whereDate('created_at', $today)->sum('amount_paid'),
-            'week' => (float) ParkingTransaction::whereBetween('created_at', [
-                $today->copy()->startOfWeek(),
-                $today->copy()->endOfWeek(),
-            ])->sum('amount_paid'),
-            'month' => (float) ParkingTransaction::whereMonth('created_at', $today->month)
-                ->whereYear('created_at', $today->year)
-                ->sum('amount_paid'),
-            'activeCount' => ParkingLog::where('status', ParkingStatus::Active)->count(),
-        ];
+            $summary = [
+                'today' => (float) ParkingTransaction::whereDate('created_at', $today)->sum('amount_paid'),
+                'week' => (float) ParkingTransaction::whereBetween('created_at', [
+                    $today->copy()->startOfWeek(),
+                    $today->copy()->endOfWeek(),
+                ])->sum('amount_paid'),
+                'month' => (float) ParkingTransaction::whereMonth('created_at', $today->month)
+                    ->whereYear('created_at', $today->year)
+                    ->sum('amount_paid'),
+                'activeCount' => ParkingLog::where('status', ParkingStatus::Active)->count(),
+            ];
 
-        $revenueTrend = collect(range(6, 0))->map(function ($daysAgo) {
-            $date = now()->subDays($daysAgo)->toDateString();
-            $total = ParkingTransaction::whereDate('created_at', $date)->sum('amount_paid');
+            $revenueTrend = collect(range(6, 0))->map(function ($daysAgo) {
+                $date = now()->subDays($daysAgo)->toDateString();
+                return ['date' => $date, 'total' => (float) ParkingTransaction::whereDate('created_at', $date)->sum('amount_paid')];
+            })->values();
 
-            return ['date' => $date, 'total' => (float) $total];
-        })->values();
+            $revenueByPaymentMethod = ParkingTransaction::query()
+                ->selectRaw('payment_method, SUM(amount_paid) as total')
+                ->groupBy('payment_method')
+                ->get()
+                ->map(fn($row) => ['payment_method' => $row->payment_method->label(), 'total' => (float) $row->total]);
 
-        $revenueByPaymentMethod = ParkingTransaction::query()
-            ->selectRaw('payment_method, SUM(amount_paid) as total')
-            ->groupBy('payment_method')
-            ->get()
-            ->map(fn($row) => [
-                'payment_method' => $row->payment_method->label(),
-                'total' => (float) $row->total,
-            ]);
+            $revenueByCategory = ParkingTransaction::query()
+                ->join('parking_logs', 'parking_logs.id', '=', 'parking_transactions.log_id')
+                ->join('categories', 'categories.id', '=', 'parking_logs.category_id')
+                ->selectRaw('categories.name as category, SUM(parking_transactions.amount_paid) as total')
+                ->groupBy('categories.name')
+                ->get();
 
-        $revenueByCategory = ParkingTransaction::query()
-            ->join('parking_logs', 'parking_logs.id', '=', 'parking_transactions.log_id')
-            ->join('categories', 'categories.id', '=', 'parking_logs.category_id')
-            ->selectRaw('categories.name as category, SUM(parking_transactions.amount_paid) as total')
-            ->groupBy('categories.name')
-            ->get();
+            return compact('summary', 'revenueTrend', 'revenueByPaymentMethod', 'revenueByCategory');
+        });
 
-        return Inertia::render('dashboard', [
-            'summary' => $summary,
-            'revenueTrend' => $revenueTrend,
-            'revenueByPaymentMethod' => $revenueByPaymentMethod,
-            'revenueByCategory' => $revenueByCategory,
-        ]);
+        return Inertia::render('dashboard', $data);
     }
 
     /**

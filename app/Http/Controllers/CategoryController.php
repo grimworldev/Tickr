@@ -13,10 +13,18 @@ class CategoryController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $allowedPerPage = [25, 50, 75, 100];
+        $perPage = (int) $request->input('per_page', 25);
+
+        if (!in_array($perPage, $allowedPerPage, true)) {
+            $perPage = 25;
+        }
+
         return Inertia::render('categories/index', [
-            'categories' => Category::query()->latest()->paginate(10),
+            'categories' => Category::query()->latest()->paginate($perPage)->withQueryString(),
+            'filters' => $request->only(['per_page']),
         ]);
     }
 

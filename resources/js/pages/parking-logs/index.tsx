@@ -1,27 +1,29 @@
 import { CardGrid } from '@/components/card-grid';
+import { Pagination } from '@/components/pagination';
+import { PerPageSelect } from '@/components/per-page-select';
 import { ParkingLogCard } from './components/parking-log-card';
 import { ParkingLogFormDialog } from './partials/parking-log-form-dialog';
 import { ParkingLogFilters } from './components/filter';
 import { Head } from '@inertiajs/react';
 import { index } from '@/routes/parking-logs';
-import type { ParkingLog, Category, Rate } from '@/types';
+import type { ParkingLog, Category, Rate, PaginatedResponse } from '@/types';
+
+type Filters = {
+    category_id?: string;
+    rate_id?: string;
+    status?: string;
+    date?: string;
+    per_page?: string;
+};
 
 type Props = {
-    parkingLogs: {
-        data: ParkingLog[];
-    };
+    parkingLogs: PaginatedResponse<ParkingLog>;
     categories: Category[];
     rates: Rate[];
-    filters: {
-        category_id?: string;
-        rate_id?: string;
-        status?: string;
-        date?: string;
-    };
+    filters: Filters;
 };
 
 export default function Index({ parkingLogs, categories, rates, filters }: Props) {
-    console.log(parkingLogs)
     return (
         <>
             <Head title="Parking Logs" />
@@ -37,16 +39,20 @@ export default function Index({ parkingLogs, categories, rates, filters }: Props
                     getKey={(row) => row.id}
                     renderItem={(row) => <ParkingLogCard parkingLog={row} />}
                 />
+
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <PerPageSelect
+                        url={index().url}
+                        value={Number(filters.per_page ?? 25)}
+                        params={filters}
+                    />
+                    <Pagination links={parkingLogs.links} />
+                </div>
             </div>
         </>
     );
 }
 
 Index.layout = {
-    breadcrumbs: [
-        {
-            title: 'Parking Logs',
-            href: index(),
-        },
-    ],
+    breadcrumbs: [{ title: 'Parking Logs', href: index() }],
 };

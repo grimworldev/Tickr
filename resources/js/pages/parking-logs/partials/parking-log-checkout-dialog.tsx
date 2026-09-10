@@ -43,14 +43,14 @@ function SummaryRow({ label, value }: { label: string; value: React.ReactNode })
 export function ParkingLogCheckoutDialog({ parkingLog, billing }: Props) {
     const [open, setOpen] = useState(false);
     const [amountPaid, setAmountPaid] = useState('');
-    const [paymentMethod, setPaymentMethod] = useState('cash');
+    const [paymentMethod, setPaymentMethod] = useState('Cash');
 
     const paid = Number(amountPaid) || 0;
     const change = paid > billing.total ? paid - billing.total : 0;
 
     const resetFields = () => {
         setAmountPaid('');
-        setPaymentMethod('cash');
+        setPaymentMethod('Cash');
     };
 
     return (
@@ -131,10 +131,10 @@ export function ParkingLogCheckoutDialog({ parkingLog, billing }: Props) {
                                             <SelectValue placeholder="Select payment method" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="cash">Cash</SelectItem>
-                                            <SelectItem value="gcash">GCash</SelectItem>
-                                            <SelectItem value="maya">Maya</SelectItem>
-                                            <SelectItem value="card">Card</SelectItem>
+                                            <SelectItem value="Cash">Cash</SelectItem>
+                                            <SelectItem value="GCash">GCash</SelectItem>
+                                            <SelectItem value="Maya">Maya</SelectItem>
+                                            <SelectItem value="Card">Card</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <input type="hidden" name="payment_method" value={paymentMethod} />
