@@ -21,6 +21,7 @@ type Props = {
 };
 
 export default function Index({ parkingLogs, categories, rates, filters }: Props) {
+    console.log(parkingLogs)
     return (
         <>
             <Head title="Parking Logs" />

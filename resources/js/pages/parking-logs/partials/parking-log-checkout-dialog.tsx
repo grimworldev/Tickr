@@ -41,7 +41,6 @@ function SummaryRow({ label, value }: { label: string; value: React.ReactNode })
 }
 
 export function ParkingLogCheckoutDialog({ parkingLog, billing }: Props) {
-    console.log(parkingLog);
     const [open, setOpen] = useState(false);
     const [amountPaid, setAmountPaid] = useState('');
     const [paymentMethod, setPaymentMethod] = useState('cash');
@@ -101,53 +100,48 @@ export function ParkingLogCheckoutDialog({ parkingLog, billing }: Props) {
                                 />
                                 <div className="mt-1 flex items-center justify-between border-t pt-1.5">
                                     <span className="text-sm font-semibold">Total Due</span>
-                                    <span className="text-sm font-semibold">
-                                        ₱{billing.total.toFixed(2)}
-                                    </span>
+                                    <span className="text-sm font-semibold">₱{billing.total.toFixed(2)}</span>
                                 </div>
+                                {paid > 0 && (
+                                    <SummaryRow label="Change" value={`₱${change.toFixed(2)}`} />
+                                )}
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="grid gap-2">
-                                <Label htmlFor="amount_paid">Amount Paid</Label>
-                                <Input
-                                    id="amount_paid"
-                                    type="number"
-                                    step="0.01"
-                                    min={0}
-                                    required
-                                    autoFocus
-                                    name="amount_paid"
-                                    value={amountPaid}
-                                    onChange={(e) => setAmountPaid(e.target.value)}
-                                    placeholder="0.00"
-                                />
-                                <InputError message={errors.amount_paid} />
-                            </div>
+                                    <Label htmlFor="amount_paid">Amount Paid</Label>
+                                    <Input
+                                        id="amount_paid"
+                                        type="number"
+                                        step="0.01"
+                                        min={0}
+                                        required
+                                        autoFocus
+                                        name="amount_paid"
+                                        value={amountPaid}
+                                        onChange={(e) => setAmountPaid(e.target.value)}
+                                        placeholder="0.00"
+                                    />
+                                </div>
 
-                            <div className="grid gap-2">
-                                <Label htmlFor="payment_method">Payment Method</Label>
-                                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                                    <SelectTrigger id="payment_method" className='w-full'>
-                                        <SelectValue placeholder="Select payment method" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="cash">Cash</SelectItem>
-                                        <SelectItem value="gcash">GCash</SelectItem>
-                                        <SelectItem value="maya">Maya</SelectItem>
-                                        <SelectItem value="card">Card</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <input type="hidden" name="payment_method" value={paymentMethod} />
-                                <InputError message={errors.payment_method} />
+                                <div className="grid gap-2">
+                                    <Label htmlFor="payment_method">Payment Method</Label>
+                                    <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                                        <SelectTrigger id="payment_method" className='w-full'>
+                                            <SelectValue placeholder="Select payment method" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="cash">Cash</SelectItem>
+                                            <SelectItem value="gcash">GCash</SelectItem>
+                                            <SelectItem value="maya">Maya</SelectItem>
+                                            <SelectItem value="card">Card</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <input type="hidden" name="payment_method" value={paymentMethod} />
+                                    <InputError message={errors.payment_method} />
+                                </div>
+                                <InputError className='col-span-2' message={errors.amount_paid} />
                             </div>
-                            </div>
-
-                            {paid > 0 && (
-                                <p className="text-sm text-muted-foreground">
-                                    Change: <strong>₱{change.toFixed(2)}</strong>
-                                </p>
-                            )}
 
                             <DialogFooter>
                                 <Button

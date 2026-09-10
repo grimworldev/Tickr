@@ -63,7 +63,6 @@ function calculateBilling(parkingLog: ParkingLog) {
 }
 
 export default function Show({ parkingLog }: Props) {
-    console.log(parkingLog)
     const transaction = parkingLog.transaction;
     const isActive = parkingLog.status === 'Active';
 

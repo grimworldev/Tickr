@@ -114,8 +114,10 @@ class ParkingLogController extends Controller
         return redirect()->route('parking-logs.index')->with('toast', ['type' => 'success', 'message' => 'Parking log deleted.']);
     }
 
-    public function checkout(Request $request, ParkingLog $parkingLog): RedirectResponse
+    public function checkout(Request $request, $uid): RedirectResponse
     {
+        $parkingLog = ParkingLog::where('uid', $uid)->firstOrFail();
+
         $validated = $request->validate([
             'amount_paid' => ['required', 'numeric', 'min:0'],
             'payment_method' => ['required'],
