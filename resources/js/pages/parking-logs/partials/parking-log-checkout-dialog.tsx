@@ -1,7 +1,8 @@
 import { Form } from '@inertiajs/react';
 import { LogOutIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { checkout } from '@/routes/parking-logs';
+import { calculateBilling, type Billing } from '@/lib/parking-billing';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -23,12 +24,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import type { Billing } from '@/lib/parking-billing';
 import type { ParkingLog } from '@/types';
 
 type Props = {
     parkingLog: ParkingLog;
-    billing: Billing;
 };
 
 function SummaryRow({ label, value }: { label: string; value: React.ReactNode }) {
@@ -40,13 +39,27 @@ function SummaryRow({ label, value }: { label: string; value: React.ReactNode })
     );
 }
 
-export function ParkingLogCheckoutDialog({ parkingLog, billing }: Props) {
+export function ParkingLogCheckoutDialog({ parkingLog }: Props) {
     const [open, setOpen] = useState(false);
     const [amountPaid, setAmountPaid] = useState('');
     const [paymentMethod, setPaymentMethod] = useState('Cash');
+    const [billing, setBilling] = useState<Billing>(() => calculateBilling(parkingLog));
+
+    useEffect(() => {
+        if (!open) return;
+
+        setBilling(calculateBilling(parkingLog)); // recompute the instant the dialog opens
+
+        const interval = setInterval(() => {
+            setBilling(calculateBilling(parkingLog));
+        }, 30_000); // keep it live while the dialog stays open
+
+        return () => clearInterval(interval);
+    }, [open, parkingLog]);
 
     const paid = Number(amountPaid) || 0;
     const change = paid > billing.total ? paid - billing.total : 0;
+    const isUnderpaid = paid > 0 && paid < billing.total;
 
     const resetFields = () => {
         setAmountPaid('');
@@ -127,7 +140,7 @@ export function ParkingLogCheckoutDialog({ parkingLog, billing }: Props) {
                                 <div className="grid gap-2">
                                     <Label htmlFor="payment_method">Payment Method</Label>
                                     <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                                        <SelectTrigger id="payment_method" className='w-full'>
+                                        <SelectTrigger id="payment_method" className="w-full">
                                             <SelectValue placeholder="Select payment method" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -140,8 +153,14 @@ export function ParkingLogCheckoutDialog({ parkingLog, billing }: Props) {
                                     <input type="hidden" name="payment_method" value={paymentMethod} />
                                     <InputError message={errors.payment_method} />
                                 </div>
-                                <InputError className='col-span-2' message={errors.amount_paid} />
+                                <InputError className="col-span-2" message={errors.amount_paid} />
                             </div>
+
+                            {isUnderpaid && (
+                                <p className="text-sm text-destructive">
+                                    Amount paid must be at least ₱{billing.total.toFixed(2)}.
+                                </p>
+                            )}
 
                             <DialogFooter>
                                 <Button
@@ -151,7 +170,7 @@ export function ParkingLogCheckoutDialog({ parkingLog, billing }: Props) {
                                 >
                                     Cancel
                                 </Button>
-                                <Button type="submit" disabled={processing}>
+                                <Button type="submit" disabled={processing || isUnderpaid}>
                                     {processing && <Spinner />}
                                     Checkout
                                 </Button>

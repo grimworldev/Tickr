@@ -106,9 +106,11 @@ class ParkingLogController extends Controller
             'payment_method' => ['required', Rule::enum(PaymentMethod::class)],
         ]);
 
-        if ($validated['amount_paid'] < $parkingLog->rate) {
+        $billing = $parkingLog->calculateBillingTotal();
+
+        if ($validated['amount_paid'] < $billing['total']) {
             return back()->withErrors([
-                'amount_paid' => 'Amount paid cannot be less than the rate owed.',
+                'amount_paid' => "Amount paid cannot be less than the total due (₱{$billing['total']}).",
             ]);
         }
 
@@ -119,7 +121,7 @@ class ParkingLogController extends Controller
 
         $parkingLog->transaction()->create([
             'amount_paid' => $validated['amount_paid'],
-            'change_due' => $validated['amount_paid'] - $parkingLog->rate,
+            'change_due' => $validated['amount_paid'] - $billing['total'],
             'payment_method' => $validated['payment_method'],
             'processed_by' => $request->user()->id,
         ]);

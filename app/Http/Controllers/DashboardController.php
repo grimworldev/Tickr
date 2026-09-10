@@ -47,21 +47,35 @@ class DashboardController extends Controller
 
             $revenueTrend = collect(range(6, 0))->map(function ($daysAgo) {
                 $date = now()->subDays($daysAgo)->toDateString();
-                return ['date' => $date, 'total' => (float) ParkingTransaction::whereDate('created_at', $date)->sum('amount_paid')];
-            })->values();
+                return [
+                    'date' => $date,
+                    'total' => (float) ParkingTransaction::whereDate('created_at', $date)->sum('amount_paid'),
+                ];
+            })->values()->all();
 
             $revenueByPaymentMethod = ParkingTransaction::query()
                 ->selectRaw('payment_method, SUM(amount_paid) as total')
                 ->groupBy('payment_method')
                 ->get()
-                ->map(fn($row) => ['payment_method' => $row->payment_method->label(), 'total' => (float) $row->total]);
+                ->map(fn($row) => [
+                    'payment_method' => $row->payment_method->label(),
+                    'total' => (float) $row->total,
+                ])
+                ->values()
+                ->all();
 
             $revenueByCategory = ParkingTransaction::query()
                 ->join('parking_logs', 'parking_logs.id', '=', 'parking_transactions.log_id')
                 ->join('categories', 'categories.id', '=', 'parking_logs.category_id')
                 ->selectRaw('categories.name as category, SUM(parking_transactions.amount_paid) as total')
                 ->groupBy('categories.name')
-                ->get();
+                ->get()
+                ->map(fn($row) => [
+                    'category' => $row->category,
+                    'total' => (float) $row->total,
+                ])
+                ->values()
+                ->all();
 
             return compact('summary', 'revenueTrend', 'revenueByPaymentMethod', 'revenueByCategory');
         });

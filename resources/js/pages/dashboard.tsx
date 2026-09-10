@@ -24,7 +24,6 @@ function SummaryCard({ label, value, isCurrency = true }: { label: string; value
 }
 
 export default function Dashboard({ summary, revenueTrend, revenueByPaymentMethod, revenueByCategory }: Props) {
-    console.log(revenueByPaymentMethod)
     return (
         <>
             <Head title="Dashboard" />

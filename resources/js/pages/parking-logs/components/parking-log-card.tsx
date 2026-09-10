@@ -6,7 +6,6 @@ import dayjs from 'dayjs';
 import { show } from '@/routes/parking-logs';
 import { ParkingLogDeleteDialog } from '../partials/parking-log-delete-dialog';
 import { ParkingLogCheckoutDialog } from '../partials/parking-log-checkout-dialog';
-import { calculateBilling } from '@/lib/parking-billing';
 import type { ParkingLog } from '@/types';
 
 type Props = {
@@ -56,10 +55,8 @@ export function ParkingLogCard({ parkingLog }: Props) {
     const elapsedHours = Math.floor(elapsedMinutesTotal / 60);
     const elapsedMinutes = elapsedMinutesTotal % 60;
 
-    const billing = calculateBilling(parkingLog);
-
     return (
-        <div className="flex flex-col gap-3 rounded-xl border p-4">
+        <div className="flex flex-col gap-3 rounded-xl border p-4 transition-colors duration-200 hover:border-primary hover:cursor-pointer">
             <div className="flex items-center justify-between">
                 <h3 className="font-semibold">{parkingLog.plate_number}</h3>
                 <Badge variant={isActive ? 'default' : 'secondary'}>{parkingLog.status}</Badge>
@@ -90,7 +87,7 @@ export function ParkingLogCard({ parkingLog }: Props) {
             <div className="flex items-center justify-between border-t pt-3">
                 <div>
                     {isActive && !hasTransaction && (
-                        <ParkingLogCheckoutDialog parkingLog={parkingLog} billing={billing} />
+                        <ParkingLogCheckoutDialog parkingLog={parkingLog} />
                     )}
                 </div>
 
