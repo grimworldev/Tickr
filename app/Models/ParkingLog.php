@@ -65,4 +65,32 @@ class ParkingLog extends Model
     {
         return $this->hasOne(ParkingTransaction::class, 'log_id');
     }
+
+    /**
+     * Compute the authoritative total owed based on rate type and elapsed time.
+     * This is the server-side source of truth used to validate checkout payments —
+     * never trust a total computed on the frontend for anything involving money.
+     */
+    public function calculateBillingTotal(): array
+    {
+        $this->loadMissing('rateDetail');
+
+        $start = $this->time_in;
+        $end = $this->time_out ?? now();
+        $unitPrice = (float) $this->rate;
+        $rateType = strtolower($this->rateDetail->name ?? 'hourly');
+
+        $units = match ($rateType) {
+            'daily' => $end->copy()->startOfDay()->diffInDays($start->copy()->startOfDay()) + 1,
+            'weekly' => $end->copy()->startOfWeek()->diffInWeeks($start->copy()->startOfWeek()) + 1,
+            'monthly' => $end->copy()->startOfMonth()->diffInMonths($start->copy()->startOfMonth()) + 1,
+            default => max(1, (int) ceil($start->diffInSeconds($end) / 3600)),
+        };
+
+        return [
+            'units' => $units,
+            'unit_price' => $unitPrice,
+            'total' => round($units * $unitPrice, 2),
+        ];
+    }
 }

@@ -13,20 +13,26 @@ class RateController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        //
+        $allowedPerPage = [25, 50, 75, 100];
+        $perPage = (int) $request->input('per_page', 25);
+
+        if (!in_array($perPage, $allowedPerPage, true)) {
+            $perPage = 25;
+        }
+
         return Inertia::render('rates/index', [
-            'rates' => Rate::query()->latest()->paginate(10),
+            'rates' => Rate::query()->latest()->paginate($perPage)->withQueryString(),
+            'filters' => $request->only(['per_page']),
         ]);
     }
 
     /**
      * Show the form for creating a new resource.
      */
-    public function create(): Response
+    public function create()
     {
-        return Inertia::render('rates/create');
     }
 
     /**
@@ -49,7 +55,6 @@ class RateController extends Controller
      */
     public function show(Rate $rate)
     {
-        //
     }
 
     /**
@@ -57,22 +62,30 @@ class RateController extends Controller
      */
     public function edit(Rate $rate)
     {
-        //
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Rate $rate)
+    public function update(Request $request, Rate $rate): RedirectResponse
     {
-        //
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255', 'unique:rates,name,' . $rate->id],
+            'price' => ['required', 'numeric', 'min:0', 'max:999999.99'],
+        ]);
+
+        $rate->update($validated);
+
+        return redirect()->route('rates.index')->with('toast', ['type' => 'success', 'message' => 'Rate updated successfully.']);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Rate $rate)
+    public function destroy(Rate $rate): RedirectResponse
     {
-        //
+        $rate->delete();
+
+        return redirect()->route('rates.index')->with('toast', ['type' => 'success', 'message' => 'Rate deleted.']);
     }
 }
