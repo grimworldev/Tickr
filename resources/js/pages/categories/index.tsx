@@ -18,6 +18,12 @@ export default function Index({ categories, filters }: Props) {
         { key: 'id', header: 'ID', hideBelow: 'sm' },
         { key: 'name', header: 'Name' },
         {
+            key: 'rates',
+            header: 'Branch Rates',
+            render: (row) => row.rates?.map((rate) => `${rate.name}: ₱${rate.price}`).join(', ') || 'No rates set',
+            hideBelow: 'md',
+        },
+        {
             key: 'created_at',
             header: 'Created At',
             hideBelow: 'md',

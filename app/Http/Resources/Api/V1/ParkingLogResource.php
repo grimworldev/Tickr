@@ -13,6 +13,7 @@ class ParkingLogResource extends JsonResource
             'id' => $this->id,
             'uid' => $this->uid,
             'plate_number' => $this->plate_number,
+            'branch_id' => $this->branch_id,
             'category' => $this->whenLoaded('category', function () {
                 return [
                     'id' => $this->category->id,

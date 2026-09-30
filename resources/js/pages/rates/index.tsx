@@ -6,16 +6,18 @@ import { RateEditDialog } from './partials/rate-edit-dialog';
 import { RateDeleteDialog } from './partials/rate-delete-dialog';
 import { Head } from '@inertiajs/react';
 import { index } from '@/routes/rates';
-import type { Rate, PaginatedResponse } from '@/types';
+import type { Category, Rate, PaginatedResponse } from '@/types';
 
 type Props = {
     rates: PaginatedResponse<Rate>;
+    categories: Category[];
     filters: { per_page?: string };
 };
 
-export default function Index({ rates, filters }: Props) {
+export default function Index({ rates, categories, filters }: Props) {
     const columns: Column<Rate>[] = [
         { key: 'id', header: 'ID', hideBelow: 'sm' },
+        { key: 'category', header: 'Category', render: (row) => row.category?.name ?? '—' },
         { key: 'name', header: 'Name' },
         { key: 'price', header: 'Price' },
         {
@@ -31,7 +33,7 @@ export default function Index({ rates, filters }: Props) {
             className: 'text-right',
             render: (row) => (
                 <div className="flex justify-end gap-1">
-                    <RateEditDialog rate={row} />
+                    <RateEditDialog rate={row} categories={categories} />
                     <RateDeleteDialog rate={row} />
                 </div>
             ),
@@ -44,7 +46,7 @@ export default function Index({ rates, filters }: Props) {
 
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <div className="flex justify-end">
-                    <RateFormDialog />
+                    <RateFormDialog categories={categories} />
                 </div>
 
                 <Table data={rates.data} columns={columns} getRowKey={(row) => row.id} />

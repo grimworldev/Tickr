@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, CarFront, FolderGit2, LayoutGrid, Tags, Ticket, Users } from 'lucide-react';
+import { BookOpen, CarFront, FolderGit2, LayoutGrid, Store, Tags, Ticket, Users } from 'lucide-react';
+import { usePage } from '@inertiajs/react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -15,6 +16,7 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
+import { UserRole } from '@/types/auth';
 
 const mainNavItems: NavItem[] = [
     {
@@ -42,6 +44,11 @@ const mainNavItems: NavItem[] = [
         href: '/users',
         icon: Users,
     },
+    {
+        title: 'Branches',
+        href: '/branches',
+        icon: Store,
+    },
 ];
 
 const footerNavItems: NavItem[] = [
@@ -58,6 +65,16 @@ const footerNavItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
+    const { auth } = usePage<{ auth: { user: { role: number } } }>().props;
+    const mainItems = mainNavItems.filter((item) => {
+        if (item.title === 'Branches') return auth.user.role === UserRole.Administrator;
+        if (item.title === 'Categories' || item.title === 'Rates' || item.title === 'Users') {
+            return auth.user.role !== UserRole.Staff;
+        }
+
+        return true;
+    });
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -73,7 +90,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain items={mainItems} />
             </SidebarContent>
 
             <SidebarFooter>

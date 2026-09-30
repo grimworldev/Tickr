@@ -4,6 +4,7 @@ namespace App\Actions\Fortify;
 
 use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
+use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -25,15 +26,17 @@ class CreateNewUser implements CreatesNewUsers
             'password' => $this->passwordRules(),
         ])->validate();
 
-        return User::create([
+        $user = User::create([
             'first_name' => $input['first_name'],
             'last_name' => $input['last_name'],
             'gender' => $input['gender'] ?? null,
             'username' => $input['username'],
             'email' => $input['email'],
             'password' => Hash::make($input['password']),
-            // 'role' omitted — DB default (UserRole::User) applies
+            'role' => UserRole::Staff,
             // 'uuid' omitted — HasUuids generates it automatically
         ]);
+
+        return $user;
     }
 }

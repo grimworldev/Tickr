@@ -13,15 +13,19 @@ import { Spinner } from '@/components/ui/spinner';
 import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import type { Branch } from '@/types';
 
-export function UserFormDialog() {
+export function UserFormDialog({ branches, isAdmin }: { branches: Branch[]; isAdmin: boolean }) {
     const [open, setOpen] = useState(false);
     const [gender, setGender] = useState('');
-    const [role, setRole] = useState('1');
+    const [role, setRole] = useState('2');
+    const [branchIds, setBranchIds] = useState<number[]>(branches[0] ? [branches[0].id] : []);
 
     const resetFields = () => {
         setGender('');
-        setRole('1');
+        setRole('2');
+        setBranchIds(branches[0] ? [branches[0].id] : []);
     };
 
     return (
@@ -29,19 +33,19 @@ export function UserFormDialog() {
             <DialogTrigger asChild>
                 <Button>Add User</Button>
             </DialogTrigger>
-            <DialogContent className="max-h-[95dvh] overflow-y-auto">
+            <DialogContent className="min-w-3xl overflow-y-auto max-h-[95dvh]">
                 <Form
                     {...store.form()}
                     resetOnSuccess
                     disableWhileProcessing
                     onSuccess={() => { setOpen(false); resetFields(); }}
-                    className="grid gap-6"
+                    className="grid gap-2 2"
                 >
                     {({ processing, errors }) => (
                         <>
                             <DialogHeader>
                                 <DialogTitle>Add User</DialogTitle>
-                                <DialogDescription>Create a new staff or admin account.</DialogDescription>
+                                <DialogDescription>Create a branch manager or staff account.</DialogDescription>
                             </DialogHeader>
 
                             <div className="grid grid-cols-2 gap-4">
@@ -80,13 +84,39 @@ export function UserFormDialog() {
                                         <SelectValue placeholder="Select role" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="0">Administrator</SelectItem>
-                                        <SelectItem value="1">User</SelectItem>
+                                        {isAdmin && <SelectItem value="0">Administrator</SelectItem>}
+                                        <SelectItem value="1">User (Branch Manager)</SelectItem>
+                                        <SelectItem value="2">Staff</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <input type="hidden" name="role" value={role} />
                                 <InputError message={errors.role} />
                             </div>
+
+                            {role !== '0' && (
+                                <div className="grid gap-2">
+                                    <Label>Assigned Branches</Label>
+                                    <div className="grid gap-2 rounded-md border p-3 sm:grid-cols-2">
+                                        {branches.map((branch) => (
+                                            <label key={branch.id} className="flex items-center gap-2 text-sm">
+                                                <Checkbox
+                                                    checked={branchIds.includes(branch.id)}
+                                                    onCheckedChange={(checked) => setBranchIds((current) =>
+                                                        checked
+                                                            ? [...current, branch.id]
+                                                            : current.filter((id) => id !== branch.id)
+                                                    )}
+                                                />
+                                                {branch.name}
+                                                {branchIds.includes(branch.id) && (
+                                                    <input type="hidden" name="branch_ids[]" value={branch.id} />
+                                                )}
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <InputError message={errors.branch_ids} />
+                                </div>
+                            )}
                             </div>
 
                             <div className="grid gap-2">

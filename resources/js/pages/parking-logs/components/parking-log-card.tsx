@@ -1,12 +1,13 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { EyeIcon } from 'lucide-react';
 import dayjs from 'dayjs';
 import { show } from '@/routes/parking-logs';
 import { ParkingLogDeleteDialog } from '../partials/parking-log-delete-dialog';
 import { ParkingLogCheckoutDialog } from '../partials/parking-log-checkout-dialog';
 import type { ParkingLog } from '@/types';
+import { UserRole } from '@/types/auth';
 
 type Props = {
     parkingLog: ParkingLog;
@@ -46,6 +47,7 @@ function TimeBlock({
 }
 
 export function ParkingLogCard({ parkingLog }: Props) {
+    const { auth } = usePage<{ auth: { user: { role: number } } }>().props;
     const isActive = parkingLog.status === 'Active';
     const hasTransaction = Boolean(parkingLog.transaction);
 
@@ -97,7 +99,7 @@ export function ParkingLogCard({ parkingLog }: Props) {
                             <EyeIcon className="size-4" />
                         </Link>
                     </Button>
-                    <ParkingLogDeleteDialog parkingLog={parkingLog} />
+                    {auth.user.role !== UserRole.Staff && <ParkingLogDeleteDialog parkingLog={parkingLog} />}
                 </div>
             </div>
         </div>

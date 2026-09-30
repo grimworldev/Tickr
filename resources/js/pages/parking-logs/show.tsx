@@ -112,7 +112,7 @@ export default function Show({ parkingLog }: Props) {
 
                         {isActive && !transaction && (
                             <div className="mt-4 flex justify-end">
-                                <ParkingLogCheckoutDialog parkingLog={parkingLog} billing={billing} />
+                                <ParkingLogCheckoutDialog parkingLog={parkingLog} />
                             </div>
                         )}
                     </div>

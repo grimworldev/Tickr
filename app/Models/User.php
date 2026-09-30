@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -36,12 +37,27 @@ use Laravel\Sanctum\HasApiTokens;
  * @property Carbon|null $updated_at
  * @property-read string $name
  */
-#[Fillable(['first_name', 'last_name', 'gender', 'username', 'email', 'password'])]
+#[Fillable(['first_name', 'last_name', 'gender', 'username', 'email', 'password', 'role'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasUuids, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable, HasApiTokens;
+    use HasApiTokens, HasFactory, HasUuids, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+
+    protected static function booted(): void
+    {
+        static::created(function (User $user): void {
+            if ($user->branches()->exists()) {
+                return;
+            }
+
+            $defaultBranchId = Branch::query()->orderBy('id')->value('id');
+
+            if ($defaultBranchId) {
+                $user->branches()->attach($defaultBranchId);
+            }
+        });
+    }
 
     /**
      * The accessors to append to the model's array/JSON form.
@@ -91,12 +107,22 @@ class User extends Authenticatable implements PasskeyUser
     protected function name(): Attribute
     {
         return Attribute::make(
-            get: fn() => "{$this->first_name} {$this->last_name}",
+            get: fn () => "{$this->first_name} {$this->last_name}",
         );
     }
 
     public function isAdmin(): bool
     {
         return $this->role === UserRole::Administrator;
+    }
+
+    public function canManageBranchSettings(): bool
+    {
+        return in_array($this->role, [UserRole::Administrator, UserRole::User], true);
+    }
+
+    public function branches(): BelongsToMany
+    {
+        return $this->belongsToMany(Branch::class);
     }
 }

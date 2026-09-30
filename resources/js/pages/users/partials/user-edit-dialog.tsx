@@ -15,13 +15,16 @@ import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import type { User } from '@/types';
+import type { Branch } from '@/types';
+import { Checkbox } from '@/components/ui/checkbox';
 
-type Props = { user: User };
+type Props = { user: User; branches: Branch[]; isAdmin: boolean };
 
-export function UserEditDialog({ user }: Props) {
+export function UserEditDialog({ user, branches, isAdmin }: Props) {
     const [open, setOpen] = useState(false);
     const [gender, setGender] = useState(user.gender ?? '');
     const [role, setRole] = useState(String(user.role));
+    const [branchIds, setBranchIds] = useState<number[]>(user.branches?.map((branch) => branch.id) ?? []);
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -30,12 +33,12 @@ export function UserEditDialog({ user }: Props) {
                     <PencilIcon className="size-4" />
                 </Button>
             </DialogTrigger>
-            <DialogContent className='max-h-[95dvh]'>
+            <DialogContent className='max-h-[95dvh] overflow-y-auto min-w-3xl'>
                 <Form
                     {...update.form(user.uuid)}
                     disableWhileProcessing
                     onSuccess={() => setOpen(false)}
-                    className="grid gap-6"
+                    className="grid gap-2 2"
                 >
                     {({ processing, errors }) => (
                         <>
@@ -80,13 +83,39 @@ export function UserEditDialog({ user }: Props) {
                                         <SelectValue placeholder="Select role" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="0">Administrator</SelectItem>
-                                        <SelectItem value="1">User</SelectItem>
+                                        {isAdmin && <SelectItem value="0">Administrator</SelectItem>}
+                                        <SelectItem value="1">User (Branch Manager)</SelectItem>
+                                        <SelectItem value="2">Staff</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <input type="hidden" name="role" value={role} />
                                 <InputError message={errors.role} />
                             </div>
+
+                            {role !== '0' && (
+                                <div className="grid gap-2">
+                                    <Label>Assigned Branches</Label>
+                                    <div className="grid gap-2 rounded-md border p-3 sm:grid-cols-2">
+                                        {branches.map((branch) => (
+                                            <label key={branch.id} className="flex items-center gap-2 text-sm">
+                                                <Checkbox
+                                                    checked={branchIds.includes(branch.id)}
+                                                    onCheckedChange={(checked) => setBranchIds((current) =>
+                                                        checked
+                                                            ? [...current, branch.id]
+                                                            : current.filter((id) => id !== branch.id)
+                                                    )}
+                                                />
+                                                {branch.name}
+                                                {branchIds.includes(branch.id) && (
+                                                    <input type="hidden" name="branch_ids[]" value={branch.id} />
+                                                )}
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <InputError message={errors.branch_ids} />
+                                </div>
+                            )}
                             </div>
 
                             <div className="grid gap-2">

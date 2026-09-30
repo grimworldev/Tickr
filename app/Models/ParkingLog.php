@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
-#[Fillable(['plate_number', 'category_id', 'rate_id', 'rate', 'time_in', 'time_out', 'status', 'logged_by'])]
+#[Fillable(['plate_number', 'branch_id', 'category_id', 'rate_id', 'rate', 'time_in', 'time_out', 'status', 'logged_by'])]
 class ParkingLog extends Model
 {
     use HasFactory, HasUuids;
@@ -27,7 +27,7 @@ class ParkingLog extends Model
     public function newUniqueId(): string
     {
         return collect(range(1, 3))
-            ->map(fn() => Str::lower(Str::random(4)))
+            ->map(fn () => Str::lower(Str::random(4)))
             ->implode('-');
     }
 
@@ -51,9 +51,14 @@ class ParkingLog extends Model
         return $this->belongsTo(Category::class);
     }
 
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
     public function rateDetail(): BelongsTo
     {
-        return $this->belongsTo(Rate::class, 'rate_id');
+        return $this->belongsTo(Rate::class, 'rate_id')->withTrashed();
     }
 
     public function loggedBy(): BelongsTo

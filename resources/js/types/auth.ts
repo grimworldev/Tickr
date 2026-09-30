@@ -1,12 +1,17 @@
 export const UserRole = {
     Administrator: 0,
     User: 1,
+    Staff: 2,
 } as const;
 
 export type UserRoleValue = (typeof UserRole)[keyof typeof UserRole];
 
 export function userRoleLabel(role: UserRoleValue): string {
-    return role === UserRole.Administrator ? 'System Administrator' : 'User';
+    return {
+        [UserRole.Administrator]: 'System Administrator',
+        [UserRole.User]: 'User (Branch Manager)',
+        [UserRole.Staff]: 'Staff',
+    }[role];
 }
 
 export type User = {
@@ -21,6 +26,7 @@ export type User = {
     avatar?: string;
     email_verified_at: string | null;
     role: UserRoleValue;
+    branches?: { id: number; name: string }[];
     two_factor_enabled?: boolean;
     created_at: string;
     updated_at: string;

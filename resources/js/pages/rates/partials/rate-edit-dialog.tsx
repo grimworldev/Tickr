@@ -16,14 +16,20 @@ import InputError from '@/components/input-error';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import {
+    Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
 import type { Rate } from '@/types';
+import type { Category } from '@/types';
 
 type Props = {
     rate: Rate;
+    categories: Category[];
 };
 
-export function RateEditDialog({ rate }: Props) {
+export function RateEditDialog({ rate, categories }: Props) {
     const [open, setOpen] = useState(false);
+    const [categoryId, setCategoryId] = useState(String(rate.category_id ?? ''));
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -48,6 +54,23 @@ export function RateEditDialog({ rate }: Props) {
                                 </DialogDescription>
                             </DialogHeader>
 
+                            <div className="grid gap-2">
+                                <Label htmlFor={`category_id_${rate.id}`}>Vehicle Category</Label>
+                                <Select value={categoryId} onValueChange={setCategoryId}>
+                                    <SelectTrigger id={`category_id_${rate.id}`} className="w-full">
+                                        <SelectValue placeholder="Select a category" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {categories.map((category) => (
+                                            <SelectItem key={category.id} value={String(category.id)}>
+                                                {category.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <input type="hidden" name="category_id" value={categoryId} />
+                                <InputError message={errors.category_id} />
+                            </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="name">Name</Label>
                                 <Input

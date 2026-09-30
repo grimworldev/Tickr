@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\BranchContext;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -35,15 +36,27 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+        $branches = $user
+            ? BranchContext::accessibleTo($user)->map(fn ($branch) => [
+                'id' => $branch->id,
+                'name' => $branch->name,
+            ])->values()
+            : collect();
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
                 'user' => $request->user(),
             ],
-            'sidebarOpen' => !$request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'branches' => $branches,
+            'activeBranchId' => fn () => $user
+                ? BranchContext::active($request)->id
+                : null,
+            'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'flash' => [
-                'toast' => fn() => $request->session()->get('toast'),
+                'toast' => fn () => $request->session()->get('toast'),
             ],
         ];
     }

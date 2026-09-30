@@ -87,7 +87,10 @@ export function ParkingLogFormDialog({ categories, rates }: Props) {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="grid gap-2">
                                     <Label htmlFor="category_id">Category</Label>
-                                    <Select value={categoryId} onValueChange={setCategoryId}>
+                                    <Select value={categoryId} onValueChange={(value) => {
+                                        setCategoryId(value);
+                                        setRateId('');
+                                    }}>
                                         <SelectTrigger id="category_id" className="w-full">
                                             <SelectValue placeholder="Select a category" />
                                         </SelectTrigger>
@@ -113,7 +116,7 @@ export function ParkingLogFormDialog({ categories, rates }: Props) {
                                             <SelectValue placeholder="Select a rate" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {rates.map((rate) => (
+                                            {rates.filter((rate) => rate.category_id === Number(categoryId)).map((rate) => (
                                                 <SelectItem key={rate.id} value={String(rate.id)}>
                                                     {rate.name} (₱{rate.price})
                                                 </SelectItem>

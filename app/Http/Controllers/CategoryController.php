@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Support\BranchContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -15,15 +16,20 @@ class CategoryController extends Controller
      */
     public function index(Request $request): Response
     {
+        abort_unless($request->user()->canManageBranchSettings(), 403);
         $allowedPerPage = [25, 50, 75, 100];
         $perPage = (int) $request->input('per_page', 25);
 
-        if (!in_array($perPage, $allowedPerPage, true)) {
+        if (! in_array($perPage, $allowedPerPage, true)) {
             $perPage = 25;
         }
 
         return Inertia::render('categories/index', [
-            'categories' => Category::query()->latest()->paginate($perPage)->withQueryString(),
+            'categories' => Category::query()
+                ->with(['rates' => fn ($query) => $query->where('branch_id', BranchContext::active($request)->id)])
+                ->latest()
+                ->paginate($perPage)
+                ->withQueryString(),
             'filters' => $request->only(['per_page']),
         ]);
     }
@@ -33,6 +39,8 @@ class CategoryController extends Controller
      */
     public function create(): Response
     {
+        abort_unless(request()->user()->canManageBranchSettings(), 403);
+
         return Inertia::render('categories/create');
     }
 
@@ -41,6 +49,7 @@ class CategoryController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        abort_unless($request->user()->canManageBranchSettings(), 403);
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255', 'unique:categories,name'],
         ]);
@@ -56,6 +65,8 @@ class CategoryController extends Controller
      */
     public function show(Category $category): Response
     {
+        abort_unless(request()->user()->canManageBranchSettings(), 403);
+
         return Inertia::render('categories/show', [
             'category' => $category,
         ]);
@@ -66,6 +77,8 @@ class CategoryController extends Controller
      */
     public function edit(Category $category): Response
     {
+        abort_unless(request()->user()->canManageBranchSettings(), 403);
+
         return Inertia::render('categories/edit', [
             'category' => $category,
         ]);
@@ -76,8 +89,9 @@ class CategoryController extends Controller
      */
     public function update(Request $request, Category $category): RedirectResponse
     {
+        abort_unless($request->user()->canManageBranchSettings(), 403);
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255', 'unique:categories,name,' . $category->id],
+            'name' => ['required', 'string', 'max:255', 'unique:categories,name,'.$category->id],
         ]);
 
         $category->update($validated);
@@ -91,6 +105,7 @@ class CategoryController extends Controller
      */
     public function destroy(Category $category): RedirectResponse
     {
+        abort_unless(request()->user()->canManageBranchSettings(), 403);
         $category->delete();
 
         return redirect()->route('categories.index')

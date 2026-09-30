@@ -20,14 +20,23 @@ class ParkingLogSeeder extends Seeder
 
         if ($categories->isEmpty() || $rates->isEmpty() || $users->isEmpty()) {
             $this->command->warn('Seed categories, rates, and users first — skipping parking logs.');
+
             return;
         }
 
         // Spread 150 tickets across the last 90 days for realistic daily/weekly/monthly report data.
         for ($i = 0; $i < 150; $i++) {
             $category = $categories->random();
-            $rate = $rates->random();
             $user = $users->random();
+            $branch = $user->branches()->first();
+            $rate = $rates->first(
+                fn (Rate $candidate) => $candidate->branch_id === $branch?->id
+                    && $candidate->category_id === $category->id
+            );
+
+            if (! $branch || ! $rate) {
+                continue;
+            }
 
             $timeIn = Carbon::now()
                 ->subDays(rand(0, 90))
@@ -35,6 +44,7 @@ class ParkingLogSeeder extends Seeder
 
             ParkingLog::create([
                 'plate_number' => $this->randomPlate(),
+                'branch_id' => $branch->id,
                 'category_id' => $category->id,
                 'rate_id' => $rate->id,
                 'rate' => $rate->price,
